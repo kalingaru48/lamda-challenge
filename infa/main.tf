@@ -1,39 +1,4 @@
-# main.tf
 
-terraform {
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 5.0"
-    }
-  }
-}
-
-provider "aws" {
-  region = var.aws_region
-}
-
-# VPC Configuration
-resource "aws_vpc" "main" {
-  cidr_block           = var.vpc_cidr
-  enable_dns_hostnames = true
-  enable_dns_support   = true
-
-  tags = {
-    Name = "${var.project_name}-vpc"
-  }
-}
-
-resource "aws_subnet" "private" {
-  count             = 2
-  vpc_id            = aws_vpc.main.id
-  cidr_block        = var.private_subnet_cidrs[count.index]
-  availability_zone = var.availability_zones[count.index]
-
-  tags = {
-    Name = "${var.project_name}-private-${count.index + 1}"
-  }
-}
 
 # Security Group for Lambda
 resource "aws_security_group" "lambda" {
@@ -61,62 +26,85 @@ resource "aws_security_group" "rds" {
   }
 }
 
-# RDS Instance
-resource "aws_db_instance" "postgres" {
-  identifier        = "${var.project_name}-db"
-  engine            = "postgres"
-  engine_version    = "14.7"
-  instance_class    = "db.t3.micro"
-  allocated_storage = 20
 
-  db_name  = var.db_name
-  username = var.db_username
-  password = var.db_password
+# # VPC Configuration
+# resource "aws_vpc" "main" {
+#   cidr_block           = var.vpc_cidr
+#   enable_dns_hostnames = true
+#   enable_dns_support   = true
 
-  vpc_security_group_ids = [aws_security_group.rds.id]
-  db_subnet_group_name   = aws_db_subnet_group.main.name
+#   tags = {
+#     Name = "${var.project_name}-vpc"
+#   }
+# }
 
-  skip_final_snapshot = true
-}
+# resource "aws_subnet" "private" {
+#   count             = 2
+#   vpc_id            = aws_vpc.main.id
+#   cidr_block        = var.private_subnet_cidrs[count.index]
+#   availability_zone = var.availability_zones[count.index]
 
-resource "aws_db_subnet_group" "main" {
-  name       = "${var.project_name}-db-subnet-group"
-  subnet_ids = aws_subnet.private[*].id
-}
+#   tags = {
+#     Name = "${var.project_name}-private-${count.index + 1}"
+#   }
+# }
 
-# Secrets Manager
-resource "aws_secretsmanager_secret" "db_credentials" {
-  name = "${var.project_name}-db-credentials"
-}
+# # RDS Instance
+# resource "aws_db_instance" "postgres" {
+#   identifier        = "${var.project_name}-db"
+#   engine            = "postgres"
+#   engine_version    = "14.7"
+#   instance_class    = "db.t3.micro"
+#   allocated_storage = 20
 
-resource "aws_secretsmanager_secret_version" "db_credentials" {
-  secret_id = aws_secretsmanager_secret.db_credentials.id
-  secret_string = jsonencode({
-    username = var.db_username
-    password = var.db_password
-    host     = aws_db_instance.postgres.endpoint
-    port     = 5432
-    dbname   = var.db_name
-  })
-}
+#   db_name  = var.db_name
+#   username = var.db_username
+#   password = var.db_password
 
-# IAM Role for Lambda
-resource "aws_iam_role" "lambda" {
-  name = "${var.project_name}-lambda-role"
+#   vpc_security_group_ids = [aws_security_group.rds.id]
+#   db_subnet_group_name   = aws_db_subnet_group.main.name
 
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Action = "sts:AssumeRole"
-        Effect = "Allow"
-        Principal = {
-          Service = "lambda.amazonaws.com"
-        }
-      }
-    ]
-  })
-}
+#   skip_final_snapshot = true
+# }
+
+# resource "aws_db_subnet_group" "main" {
+#   name       = "${var.project_name}-db-subnet-group"
+#   subnet_ids = aws_subnet.private[*].id
+# }
+
+# # Secrets Manager
+# resource "aws_secretsmanager_secret" "db_credentials" {
+#   name = "${var.project_name}-db-credentials"
+# }
+
+# resource "aws_secretsmanager_secret_version" "db_credentials" {
+#   secret_id = aws_secretsmanager_secret.db_credentials.id
+#   secret_string = jsonencode({
+#     username = var.db_username
+#     password = var.db_password
+#     host     = aws_db_instance.postgres.endpoint
+#     port     = 5432
+#     dbname   = var.db_name
+#   })
+# }
+
+# # IAM Role for Lambda
+# resource "aws_iam_role" "lambda" {
+#   name = "${var.project_name}-lambda-role"
+
+#   assume_role_policy = jsonencode({
+#     Version = "2012-10-17"
+#     Statement = [
+#       {
+#         Action = "sts:AssumeRole"
+#         Effect = "Allow"
+#         Principal = {
+#           Service = "lambda.amazonaws.com"
+#         }
+#       }
+#     ]
+#   })
+# }
 
 resource "aws_iam_role_policy_attachment" "lambda_basic" {
   role       = aws_iam_role.lambda.name
@@ -143,17 +131,19 @@ resource "aws_iam_role_policy" "lambda_secrets" {
 
 # Lambda Function
 resource "aws_lambda_function" "tasks_api" {
-  filename         = var.lambda_zip_path
+  source_code_hash = data.archive_file.lambda_code_zip.output_base64sha256
+  filename         = "${path.module}/lambda-code.zip"
   function_name    = "${var.project_name}-tasks-api"
   role            = aws_iam_role.lambda.arn
-  handler         = "bootstrap"
   runtime         = "provided.al2"
   architectures   = ["x86_64"]
+  timeout         = 30
+  handler         = "index.handler"
 
-  vpc_config {
-    subnet_ids         = aws_subnet.private[*].id
-    security_group_ids = [aws_security_group.lambda.id]
-  }
+  # vpc_config {
+  #   subnet_ids         = aws_subnet.private[*].id
+  #   security_group_ids = [aws_security_group.lambda.id]
+  # }
 
   environment {
     variables = {
