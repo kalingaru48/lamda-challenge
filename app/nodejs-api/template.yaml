@@ -1,0 +1,54 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  sam-app
+
+  Sample SAM Template for sam-app
+Globals:
+  Function:
+    Timeout: 30
+    LoggingConfig:
+      LogFormat: JSON
+Resources:
+  TasksBackendFunction:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      CodeUri: todo-api/
+      Handler: app.handler
+      Runtime: nodejs22.x
+      Architectures:
+      - x86_64
+      Events:
+        TasksAPI:
+          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+          Properties:
+            Path: /tasks
+            Method: get
+      Environment:
+        Variables:
+          DB_USER: todo_user
+          DB_HOST: todo-rds.cx48qq06sz0y.us-east-1.rds.amazonaws.com
+          DB_NAME: todo
+          DB_PORT: 5432
+          ENABLE_MIGRATION: false
+          AWS_REGION: "us-east-1"
+          AWS_DEFAULT_REGION: "us-east-1"
+          SPLUNK_HEC_URL: https://prd-p-rgrkh.splunkcloud.com:8088
+          SPLUNK_HEC_TOKEN: 1d21ec42-2eaf-402e-95d3-555d81759229
+
+      Policies:
+        - AWSSecretsManagerGetSecretValuePolicy:
+            SecretArn: !Sub "arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:*"
+Outputs:
+  # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
+  # Find out more about other implicit resources you can reference within SAM
+  # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
+  HelloWorldApi:
+    Description: API Gateway endpoint URL for Prod stage for Hello World function
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/hello/"
+  TasksBackendFunction:
+    Description: Hello World Lambda Function ARN
+    Value: !GetAtt TasksBackendFunction.Arn
+  TasksBackendFunctionIamRole:
+    Description: Implicit IAM Role created for Hello World function
+    Value: !GetAtt TasksBackendFunctionRole.Arn

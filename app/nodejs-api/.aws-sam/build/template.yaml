@@ -1,0 +1,61 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: 'sam-app
+
+  Sample SAM Template for sam-app
+
+  '
+Globals:
+  Function:
+    Timeout: 30
+    LoggingConfig:
+      LogFormat: JSON
+Resources:
+  TasksBackendFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: TasksBackendFunction
+      Handler: app.handler
+      Runtime: nodejs22.x
+      Architectures:
+      - x86_64
+      Events:
+        TasksAPI:
+          Type: Api
+          Properties:
+            Path: /tasks
+            Method: get
+      Environment:
+        Variables:
+          DB_USER: todo_user
+          DB_HOST: todo-rds.cx48qq06sz0y.us-east-1.rds.amazonaws.com
+          DB_NAME: todo
+          DB_PORT: 5432
+          ENABLE_MIGRATION: false
+          AWS_REGION: us-east-1
+          AWS_DEFAULT_REGION: us-east-1
+          SPLUNK_HEC_URL: https://prd-p-rgrkh.splunkcloud.com:8088
+          SPLUNK_HEC_TOKEN: 1d21ec42-2eaf-402e-95d3-555d81759229
+      Policies:
+      - AWSSecretsManagerGetSecretValuePolicy:
+          SecretArn:
+            Fn::Sub: arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:*
+    Metadata:
+      SamResourceId: TasksBackendFunction
+Outputs:
+  HelloWorldApi:
+    Description: API Gateway endpoint URL for Prod stage for Hello World function
+    Value:
+      Fn::Sub: https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/hello/
+  TasksBackendFunction:
+    Description: Hello World Lambda Function ARN
+    Value:
+      Fn::GetAtt:
+      - TasksBackendFunction
+      - Arn
+  TasksBackendFunctionIamRole:
+    Description: Implicit IAM Role created for Hello World function
+    Value:
+      Fn::GetAtt:
+      - TasksBackendFunctionRole
+      - Arn

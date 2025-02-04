@@ -1,4 +1,4 @@
-aws_region = "us-west-2"
+aws_region = "us-east-1"
 aws_profile = "default"
 default_tags = {
   Stage       = "Test"

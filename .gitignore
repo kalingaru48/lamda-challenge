@@ -1,3 +1,6 @@
 **/target/*
 **/node_modules/*
 infa/.terraform/providers/*
+infa/.terraform/plugins/*
+infa/terraform.tfstate
+infa/terraform.tfstate.backup
