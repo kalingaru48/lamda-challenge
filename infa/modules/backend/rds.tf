@@ -16,7 +16,7 @@ resource "aws_db_instance" "postgres" {
   instance_class       = "db.t3.micro"
   db_name              = "todo"
   username             = "todo_user"
-  password             = aws_secretsmanager_secret_version.db_secret.secret_string
+  password             =  jsondecode(aws_secretsmanager_secret_version.db_secret.secret_string)["password"]
   parameter_group_name = "default.postgres17"
   skip_final_snapshot  = true
   publicly_accessible  = true

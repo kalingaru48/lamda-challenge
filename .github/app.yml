@@ -1,0 +1,48 @@
+name: App Terraform
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'app/nodejs-api/todo-api/**'
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v1
+        with:
+          terraform_version: 1.0.0
+
+      - name: Initialize Terraform
+        run: terraform init -backend-config=backend.hcl
+        working-directory: ./app/nodejs-api/todo-api
+
+      - name: Plan Terraform
+        if: github.event_name == 'pull_request'
+        run: terraform plan
+        working-directory: ./app/nodejs-api/todo-api
+        env:
+          TF_VAR_example: ${{ secrets.TF_VAR_EXAMPLE }}
+
+      - name: Apply Terraform
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: terraform apply -auto-approve
+        working-directory: ./app/nodejs-api/todo-api
+        env:
+          TF_VAR_example: ${{ secrets.TF_VAR_EXAMPLE }}

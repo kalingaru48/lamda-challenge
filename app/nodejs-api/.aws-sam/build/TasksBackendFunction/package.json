@@ -7,12 +7,12 @@
   "author": "SAM CLI",
   "license": "MIT",
   "dependencies": {
+    "@aws-sdk/client-secrets-manager": "^3.741.0",
     "@sentry/aws-serverless": "^8.53.0",
     "@sentry/profiling-node": "^8.53.0",
     "axios": "^1.7.9",
     "pg": "^8.13.1",
-    "splunk-logging": "^0.11.1",
-    "uuid": "^11.0.5"
+    "sinon": "^19.0.2"
   },
   "scripts": {
     "test": "mocha tests/unit/"
