@@ -1,8 +1,8 @@
 **/target/*
 **/node_modules/*
-infa/.terraform/providers/*
-infa/.terraform/plugins/*
-infa/terraform.tfstate
-infa/terraform.tfstate.backup
+infra/.terraform/providers/*
+infra/.terraform/plugins/*
+infra/terraform.tfstate
+infra/terraform.tfstate.backup
 **.zip
 app/nodejs-api/.aws-sam/**
