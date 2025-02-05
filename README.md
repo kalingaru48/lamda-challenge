@@ -1,6 +1,6 @@
 # Project Overview
 
-## `app` Folder
+## `app` folder
 Frotend URL: https://d34o1pq4fivep8.cloudfront.net/
 
 <img width="757" alt="image" src="https://github.com/user-attachments/assets/ba251308-a591-4f2d-9b71-ec5fce81e476" />
@@ -17,7 +17,7 @@ Once local development is completed the developer can push the code to GitHub. I
 Lambda CI/CD is based on Terraform, which was easy than using SAM. Because the infra was defined already with Terraform (SAM doesn't support all AWS resources required in this project) and achieving seemless ingregation between SAM and Terraform felt teredious.
 
 
-## `infra` Folder
+## `infra` folder
 
 The `infra` folder contains the infrastructure Terraform components required for Lambda functions.
 
@@ -41,5 +41,7 @@ CloudWatch Dashboard
 ## `Pending or not completed` ##
 
 - Bug fix in Lambda code unit test
+<img width="392" alt="image" src="https://github.com/user-attachments/assets/275db6bb-e91a-44ba-8bec-c0ace1a56f8c" />
+
 - Set up API Gateway and database logs to S3 and use AWS Firehose to send logs to Splunk to avoid CloudWatch data ingestion costs(~$0.50 per GB ingested).
 - Set up an alert for anomalies.
