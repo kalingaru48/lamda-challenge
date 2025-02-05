@@ -5,7 +5,7 @@ codeuri = "/home/ec2-user/lamda-challenge/app/nodejs-api/todo-api"
 runtime = "nodejs22.x"
 architecture = "x86_64"
 handler = "nodejs-api/todo-api/app.lambdaHandler"
-manifest_hash = "8791dded76f79d6a6ab4691a1794b75e"
+manifest_hash = "222e04aec36c17b4f217f79b6ea9f6f9"
 packagetype = "Zip"
 functions = ["TasksBackendFunction"]
 

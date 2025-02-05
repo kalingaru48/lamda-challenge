@@ -24,11 +24,12 @@ resource "aws_kms_key" "this" {
 resource "random_password" "db_password" {
   length  = 16
   special = true
+  override_special = "_%$!"
 }
 
 # Store DB password in AWS Secrets Manager
 resource "aws_secretsmanager_secret" "db_secret" {
-  name = "rds-db-password"
+  name = "rds-db-pwd"
   kms_key_id = aws_kms_key.this.arn
   recovery_window_in_days = 0
   force_overwrite_replica_secret = true
@@ -44,7 +45,7 @@ resource "aws_secretsmanager_secret_version" "db_secret" {
 
 # Store Sentry DSN in Secrets Manager
 resource "aws_secretsmanager_secret" "sentry_secret" {
-  name = "sentry-dsn-url"
+  name = "sentry-dsn-v1"
   recovery_window_in_days = 0
   force_overwrite_replica_secret = true
 }
@@ -52,13 +53,13 @@ resource "aws_secretsmanager_secret" "sentry_secret" {
 resource "aws_secretsmanager_secret_version" "sentry_secret_version" {
   secret_id     = aws_secretsmanager_secret.sentry_secret.id
   secret_string = jsonencode({
-    dsn = "https://your-sentry-dsn@sentry.io/your-project-id"
+    dsn = "https://sentry-dsn-v1@sentry.io/your-project-id"
   })
 }
 
 # Store Splunk HEC Token in Secrets Manager
 resource "aws_secretsmanager_secret" "splunk_secret" {
-  name = "splunk-hec-token"
+  name = "splunk-hec-secret"
   recovery_window_in_days = 0
   force_overwrite_replica_secret = true
   description = "Splunk HEC Token for logging"
@@ -67,7 +68,7 @@ resource "aws_secretsmanager_secret" "splunk_secret" {
 resource "aws_secretsmanager_secret_version" "splunk_secret_version" {
   secret_id     = aws_secretsmanager_secret.splunk_secret.id
   secret_string = jsonencode({
-    token = "your-splunk-hec-token"
+    token = "splunk-hec-secret"
   })
 }
 

@@ -30,7 +30,7 @@ Resources:
           DB_HOST: todo-rds.cx48qq06sz0y.us-east-1.rds.amazonaws.com
           DB_NAME: todo
           DB_PORT: 5432
-          ENABLE_MIGRATION: false
+          ENABLE_MIGRATION: true
           AWS_REGION: "us-east-1"
           AWS_DEFAULT_REGION: "us-east-1"
           SPLUNK_HEC_URL: https://prd-p-rgrkh.splunkcloud.com:8088

@@ -1,12 +1,12 @@
 // Handle POST /tasks
-async function handlePostRequest(event, client, sendLogsToSplunk) {
+async function handlePostRequest(event, client, splunkLogger) {
     try {
         // Parse the incoming JSON payload
         const body = JSON.parse(event.body);
         const { title, description } = body;
 
         if (!title || !description) {
-            sendLogsToSplunk("Title and description are required", "error");
+            splunkLogger.send("Title and description are required", "error");
             return {
                 statusCode: 400,
                 body: JSON.stringify({ message: 'Title and description are required' }),
@@ -16,7 +16,7 @@ async function handlePostRequest(event, client, sendLogsToSplunk) {
         // Insert the task into the database
         const query = 'INSERT INTO tasks (title, description) VALUES ($1, $2) RETURNING *';
         const result = await client.query(query, [title, description]);
-        sendLogsToSplunk("Task created successfully.", "info");
+        splunkLogger.send("Task created successfully.", "info");
 
         // Return the created task
         return {
@@ -25,7 +25,7 @@ async function handlePostRequest(event, client, sendLogsToSplunk) {
         };
     } catch (error) {
         console.error('Error creating task:', error);
-        sendLogsToSplunk(`Error creating task: ${error.message}`, "error");
+        splunkLogger.send(`Error creating task: ${error.message}`, "error");
         return {
             statusCode: 500,
             body: JSON.stringify({ message: 'Internal Server Error' }),

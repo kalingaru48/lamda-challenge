@@ -7,151 +7,134 @@ const chai = require('chai');
 const expect = chai.expect;
 const sinon = require('sinon');
 const { Client } = require('pg');
-var event;
+const { SecretsManagerClient, GetSecretValueCommand } = require("@aws-sdk/client-secrets-manager");
+const SplunkLogger = require("../../utils/splunklog");
 
-describe('Tests index', function () {
-    let clientStub, sendLogsToSplunkStub;
-
-    beforeEach(() => {
-        clientStub = sinon.stub(Client.prototype, 'connect').resolves();
-        sendLogsToSplunkStub = sinon.stub().resolves();
-    });
-
-    afterEach(() => {
-        clientStub.restore();
-        sinon.restore(); // Restore all stubs
-    });
-
-    it('verifies successful response', async () => {
-        const event = { 
-            headers: {}, 
-            requestContext: { http: { method: 'GET' } } // Mock requestContext with HTTP method
-        }; 
-        const context = { callbackWaitsForEmptyEventLoop: true }; // Mock context
-        const result = await handler(event, context);
-
-        expect(result).to.be.an('object');
-        expect(result.statusCode).to.equal(200);
-        expect(result.body).to.be.an('string');
-
-        let response = JSON.parse(result.body);
-
-        expect(response).to.be.an('object');
-        expect(response.message).to.be.equal("hello world");
-        // expect(response.location).to.be.an("string");
-    });
-});
-
-describe('Tests handleGetRequest', function () {
-    let clientStub, sendLogsToSplunkStub;
+describe('Lambda Function Tests', function () {
+    let clientStub, secretsManagerStub, queryStub, client, mockSplunkLogger;
 
     beforeEach(() => {
         clientStub = sinon.stub(Client.prototype, 'connect').resolves();
-        sendLogsToSplunkStub = sinon.stub().resolves();
+        client = new Client();
+
+        secretsManagerStub = sinon.stub(SecretsManagerClient.prototype, 'send');
+        secretsManagerStub.withArgs(sinon.match.instanceOf(GetSecretValueCommand)).resolves({
+            SecretString: JSON.stringify({
+                password: "fake-db-password",
+                dsn: "https://fake-sentry-dsn-v1",
+                token: "fake-splunk-token"
+            })
+        });
+
+        mockSplunkLogger = new SplunkLogger("fake-splunk-token", "https://fake-splunk-url");
+        sinon.stub(mockSplunkLogger, 'send').resolves();
     });
 
     afterEach(() => {
-        clientStub.restore();
-        sinon.restore(); // Restore all stubs
+        sinon.restore();
     });
 
-    it('verifies successful response', async () => {
-        const client = new Client();
-        const queryStub = sinon.stub(client, 'query').resolves({ rows: [{ id: 1, title: 'Test Task', description: 'Test Description' }] });
-
-        const result = await handleGetRequest(client, sendLogsToSplunkStub);
-
+    const parseResponse = (result) => {
         expect(result).to.be.an('object');
-        expect(result.statusCode).to.equal(200);
-        expect(result.body).to.be.an('string');
+        expect(result.body).to.be.a('string');
+        return JSON.parse(result.body);
+    };
 
-        let response = JSON.parse(result.body);
+    describe('Handler (index.js)', function () {
+        this.timeout(5000); // Set 5 seconds timeout
+    
+        it('should return a successful response', async () => {
+            const event = { requestContext: { http: { method: 'GET' } } };
+            const context = { callbackWaitsForEmptyEventLoop: true };
+    
+            try {
+                console.log("Before calling handler...");
+                const result = await handler(event, context);
+                console.log("Handler result:", result);
+    
+                const response = parseResponse(result);
+    
+                expect(result.statusCode).to.equal(200);
+                expect(response).to.be.an('object');
+                expect(response.message).to.equal('hello world');
+    
+                sinon.assert.called(mockSplunkLogger.send);
+            } catch (error) {
+                console.error('Test failed with error:', error);
+                throw error;
+            }
+        });
+    });
+    
 
-        expect(response).to.be.an('array');
-        expect(response[0].title).to.equal('Test Task');
-        queryStub.restore();
+    describe('handleGetRequest', function () {
+        it('should return tasks successfully', async () => {
+            queryStub = sinon.stub(client, 'query').resolves({
+                rows: [{ id: 1, title: 'Test Task', description: 'Test Description' }]
+            });
+
+            const result = await handleGetRequest(client, mockSplunkLogger);
+            const response = parseResponse(result);
+
+            expect(result.statusCode).to.equal(200);
+            expect(response).to.be.an('array');
+            expect(response[0].title).to.equal('Test Task');
+
+            sinon.assert.called(mockSplunkLogger.send);
+        });
+
+        it('should handle database errors', async () => {
+            queryStub = sinon.stub(client, 'query').throws(new Error('Database error'));
+
+            const result = await handleGetRequest(client, mockSplunkLogger);
+            const response = parseResponse(result);
+
+            expect(result.statusCode).to.equal(500);
+            expect(response.message).to.equal('Internal Server Error');
+
+            sinon.assert.called(mockSplunkLogger.send);
+        });
     });
 
-    it('verifies error response', async () => {
-        const client = new Client();
-        const queryStub = sinon.stub(client, 'query').throws(new Error('Database error'));
+    describe('handlePostRequest', function () {
+        it('should create a task successfully', async () => {
+            const event = { body: JSON.stringify({ title: 'New Task', description: 'New Description' }) };
+            queryStub = sinon.stub(client, 'query').resolves({
+                rows: [{ id: 1, title: 'New Task', description: 'New Description' }]
+            });
 
-        const result = await handleGetRequest(client, sendLogsToSplunkStub);
+            const result = await handlePostRequest(event, client, mockSplunkLogger);
+            const response = parseResponse(result);
 
-        expect(result).to.be.an('object');
-        expect(result.statusCode).to.equal(500);
-        expect(result.body).to.be.an('string');
+            expect(result.statusCode).to.equal(201);
+            expect(response.title).to.equal('New Task');
 
-        let response = JSON.parse(result.body);
+            sinon.assert.called(mockSplunkLogger.send);
+        });
 
-        expect(response).to.be.an('object');
-        expect(response.message).to.equal('Internal Server Error');
-        queryStub.restore();
-    });
-});
+        it('should return validation error when title is missing', async () => {
+            const event = { body: JSON.stringify({ title: '' }) };
 
-describe('Tests handlePostRequest', function () {
-    let clientStub, sendLogsToSplunkStub;
+            const result = await handlePostRequest(event, client, mockSplunkLogger);
+            const response = parseResponse(result);
 
-    beforeEach(() => {
-        clientStub = sinon.stub(Client.prototype, 'connect').resolves();
-        sendLogsToSplunkStub = sinon.stub().resolves();
-    });
+            expect(result.statusCode).to.equal(400);
+            expect(response.message).to.equal('Title and description are required');
 
-    afterEach(() => {
-        clientStub.restore();
-        sinon.restore(); // Restore all stubs
-    });
+            sinon.assert.called(mockSplunkLogger.send);
+        });
 
-    it('verifies successful response', async () => {
-        const event = { body: JSON.stringify({ title: 'New Task', description: 'New Description' }) };
-        const client = new Client();
-        const queryStub = sinon.stub(client, 'query').resolves({ rows: [{ id: 1, title: 'New Task', description: 'New Description' }] });
+        it('should handle database errors', async () => {
+            const event = { body: JSON.stringify({ title: 'New Task', description: 'New Description' }) };
+            queryStub = sinon.stub(client, 'query').throws(new Error('Database error'));
 
-        const result = await handlePostRequest(event, client, sendLogsToSplunkStub);
+            const result = await handlePostRequest(event, client, mockSplunkLogger);
+            const response = parseResponse(result);
 
-        expect(result).to.be.an('object');
-        expect(result.statusCode).to.equal(201);
-        expect(result.body).to.be.an('string');
+            expect(result.statusCode).to.equal(500);
+            expect(response.message).to.equal('Internal Server Error');
 
-        let response = JSON.parse(result.body);
-
-        expect(response).to.be.an('object');
-        expect(response.title).to.equal('New Task');
-        queryStub.restore();
-    });
-
-    it('verifies validation error response', async () => {
-        const event = { body: JSON.stringify({ title: '' }) };
-        const client = new Client();
-
-        const result = await handlePostRequest(event, client, sendLogsToSplunkStub);
-
-        expect(result).to.be.an('object');
-        expect(result.statusCode).to.equal(400);
-        expect(result.body).to.be.an('string');
-
-        let response = JSON.parse(result.body);
-
-        expect(response).to.be.an('object');
-        expect(response.message).to.equal('Title and description are required');
-    });
-
-    it('verifies error response', async () => {
-        const event = { body: JSON.stringify({ title: 'New Task', description: 'New Description' }) };
-        const client = new Client();
-        const queryStub = sinon.stub(client, 'query').throws(new Error('Database error'));
-
-        const result = await handlePostRequest(event, client, sendLogsToSplunkStub);
-
-        expect(result).to.be.an('object');
-        expect(result.statusCode).to.equal(500);
-        expect(result.body).to.be.an('string');
-
-        let response = JSON.parse(result.body);
-
-        expect(response).to.be.an('object');
-        expect(response.message).to.equal('Internal Server Error');
-        queryStub.restore();
+            sinon.assert.called(mockSplunkLogger.send);
+        });
     });
 });

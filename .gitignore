@@ -4,3 +4,5 @@ infa/.terraform/providers/*
 infa/.terraform/plugins/*
 infa/terraform.tfstate
 infa/terraform.tfstate.backup
+**.zip
+app/nodejs-api/.aws-sam/**
