@@ -145,5 +145,4 @@ exports.handler = Sentry.wrapHandler(async (event, context) => {
         }
         Sentry.profiler.stopProfiler();
     }
-});
-
+}); 

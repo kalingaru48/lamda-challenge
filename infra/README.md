@@ -1,6 +1,6 @@
 # Initializing the Project with Terraform
 
-To initialize your Terraform project with a specific backend configuration, you can use the following command:
+To initialize your Terraform project with s3 backend configuration, you can use the following command:
 
 ```sh
 terraform init -backend-config=backend.hcl
@@ -24,4 +24,18 @@ terraform {
 }
 ```
 
-This configuration will set up the backend to use an S3 bucket for storing the Terraform state.
+This configuration will set up the Terraform backend to use an S3 bucket for storing the Terraform state.
+
+Next terraform plan to see what infra resource going to becreated 
+```sh
+terraform plan
+```
+
+Deploy infra resources
+```sh
+terraform apply
+```
+Clearn up resources
+```sh
+terraform destroy
+```

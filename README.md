@@ -5,23 +5,31 @@ Frotend URL: https://d34o1pq4fivep8.cloudfront.net/
 
 `app/nodejs-api` contains lambda code and can be locally tested with AWS SAM.
 The development AWS RDS is allowed for public purposely so it was easy to test Lambda code during the development.
-Purpose of using SAM is have faster feedback loop for development.
 
-Please refer `app/nodejs-api/README.md` for detailed setup
+Purpose of using SAM was get faster feedback loop during development.
 
-SAM command required to setup the build and run the lamda function can be found in the subdirectory folder.
+AWS SAM commands required to setup the build and run the lambda function can be found in `app/nodejs-api/README.md`.
 
-Once local development is completed the developer can push the code to GitHub. I will trigger the pipeline defined in `.github/workflows/app.yml`
-Lambda CI/CD is based on terraform, which was easy to than using SAM. Because the Infa was defined already with Terraform (SAM doesn't support all AWS resources required in this project) and achieing seemless ingregation between SAM and Terraform felt teredious.
+Once local development is completed the developer can push the code to GitHub. It will trigger the pipeline defined in `.github/workflows/app.yml`
 
-APP Obserability
-Sentry is setup to track errors
-Logs are sent to Splunk directly with http calls, and this was to avoid CloudWatch Log + Splunk ingegation cost.
+Lambda CI/CD is based on Terraform, which was easy than using SAM. Because the infra was defined already with Terraform (SAM doesn't support all AWS resources required in this project) and achieving seemless ingregation between SAM and Terraform felt teredious.
+
 
 ## `infra` Folder
 
-The `infra` folder contains the infrastructure Terraform components required to deploy and run the Lambda functions.
+The `infra` folder contains the infrastructure Terraform components required for Lambda functions.
 
-Terraform statefile is configured be stored in s3 bucket. You can change s3 configuration `infra/backend.hcl` and use the instruction in `infra/README.md` to deploy the project.
+Terraform statefile is configured be stored in s3 bucket. You can change Terraform state s3 backend configuration `infra/backend.hcl` and use the instructions in `infra/README.md` to deploy the project.
 
 Terraform CI/CD is setup in `.github/workflows/infra.yml`
+
+## `APP Obserability` ##
+
+Sentry is setup to track errors
+Logs are sent to Splunk directly with http calls, and this was to avoid CloudWatch Log + Splunk ingegation cost.
+
+## `Pending or not completed` ##
+
+- Bug fix in Lambda code unit test
+- Set up API Gateway and database logs to S3 and use AWS Firehose to send logs to Splunk to avoid CloudWatch data ingestion costs(~$0.50 per GB ingested).
+- Set up an alert for anomalies.
