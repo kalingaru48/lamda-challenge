@@ -1,7 +1,7 @@
 # Project Overview
 
 ## `app` folder
-Frotend URL: https://d34o1pq4fivep8.cloudfront.net/
+Frontend URL: https://d34o1pq4fivep8.cloudfront.net/
 
 <img width="757" alt="image" src="https://github.com/user-attachments/assets/ba251308-a591-4f2d-9b71-ec5fce81e476" />
 
