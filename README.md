@@ -27,14 +27,16 @@ Terraform CI/CD is setup in `.github/workflows/infra.yml`
 
 ## `APP Obserability` ##
 
-Sentry is setup to track errors
+Sentry is setup to track errors:
+
 <img width="629" alt="image" src="https://github.com/user-attachments/assets/09804c5c-ed4e-4053-9c9e-daef617cc167" />
 
 Logs are sent to Splunk directly with http calls, and this was to avoid CloudWatch Log + Splunk ingegation cost.
 
 <img width="638" alt="image" src="https://github.com/user-attachments/assets/5c74be2e-d112-40ce-8314-e12487afac54" />
 
-CloudWatch Dashboard
+CloudWatch Dashboard:
+
 <img width="739" alt="image" src="https://github.com/user-attachments/assets/c847fa0c-ec5d-400d-9b95-3a160f85d8a3" />
 
 
