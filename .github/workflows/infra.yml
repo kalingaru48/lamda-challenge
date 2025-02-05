@@ -6,6 +6,7 @@ on:
       - "*"
     paths:
       - 'infra/**'
+      - 'infra/*'
 
 jobs:
   terraform:
