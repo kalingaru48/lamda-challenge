@@ -38,7 +38,7 @@ CloudWatch Dashboard
 <img width="739" alt="image" src="https://github.com/user-attachments/assets/c847fa0c-ec5d-400d-9b95-3a160f85d8a3" />
 
 
-## `Pending or not completed` ##
+## `Pending tasks` ##
 
 - Bug fix in Lambda code unit test
 <img width="392" alt="image" src="https://github.com/user-attachments/assets/275db6bb-e91a-44ba-8bec-c0ace1a56f8c" />
