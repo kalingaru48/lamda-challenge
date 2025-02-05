@@ -3,6 +3,8 @@
 ## `app` Folder
 Frotend URL: https://d34o1pq4fivep8.cloudfront.net/
 
+<img width="757" alt="image" src="https://github.com/user-attachments/assets/ba251308-a591-4f2d-9b71-ec5fce81e476" />
+
 `app/nodejs-api` contains lambda code and can be locally tested with AWS SAM.
 The development AWS RDS is allowed for public purposely so it was easy to test Lambda code during the development.
 
