@@ -43,3 +43,8 @@ jobs:
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: terraform apply -auto-approve
         working-directory: ./infra
+
+      - name: Apply Destroy
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: terraform destroy -auto-approve
+        working-directory: ./infra
