@@ -138,6 +138,7 @@ exports.handler = Sentry.wrapHandler(async (event, context) => {
         Sentry.captureException(error);
         return { statusCode: 500, body: JSON.stringify({ message: "Internal Server Error!" }) };
 
+        
     } finally {
         if (client) {
             await client.end();
