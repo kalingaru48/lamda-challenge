@@ -43,7 +43,12 @@ jobs:
         working-directory: ./infra
 
 
-      - name: Apply Terraform
+      # - name: Apply Terraform
+      #   if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+      #   run: terraform apply -target=module.todo-api.aws_lambda_function.my_lambda -auto-approve
+      #   working-directory: ./infra
+
+      - name: Apply Destroy
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        run: terraform apply -target=module.todo-api.aws_lambda_function.my_lambda -auto-approve
+        run: terraform destroy
         working-directory: ./infra
