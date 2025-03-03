@@ -50,5 +50,5 @@ jobs:
 
       - name: Apply Destroy
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        run: terraform destroy
+        run: terraform destroy -target=module.todo-api.aws_lambda_function.my_lambda -auto-approve
         working-directory: ./infra
